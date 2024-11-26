@@ -1,0 +1,496 @@
+#include <iostream>
+#include <fstream>
+#include<vector>
+#include <string>
+#include<map>
+#include<iomanip>
+using namespace std;
+string filenemee = "clientss.txt";
+struct Clients {
+	string Accountnumber;
+	string pincode;
+	string name;
+	string number;
+	int  Accountbalance;
+	bool markdelete = false;
+};
+enum Alloptions {
+	showallclient = 1,
+	Addnewclient = 2,
+	deletee = 3,
+	update = 4,
+	find = 5,
+	transaction = 6,
+	Exit = 7
+};
+Clients Read() {
+	Clients Read;
+
+	cout << "Enter Your AccountNumber " << endl;
+	getline(cin >> ws, Read.Accountnumber);
+	cout << "Enter Your Pincode " << endl;
+	getline(cin, Read.pincode);
+	cout << "Enter Your Name " << endl;
+	getline(cin, Read.name);
+	cout << "Enter Your Number " << endl;
+	getline(cin, Read.number);
+	cout << "Enter Your Account Balance " << endl;
+	cin >> Read.Accountbalance;
+	return Read;
+}
+string REadToLine(Clients Line) {
+	string s; string sperator = "##";
+	s += Line.Accountnumber + sperator;
+	s += Line.pincode + sperator;
+	s += Line.name + sperator;
+	s += Line.number + sperator;
+	s += to_string(Line.Accountbalance) + sperator;
+	return s;
+}
+void Fileaddnewclient(string line) {
+	fstream MyFile;
+	MyFile.open(filenemee, ios::out | ios::app);
+	if (MyFile.is_open()) {
+		MyFile << line << endl;
+	}
+	MyFile.close();
+}
+void processnewclient() {
+	char c = 'n';
+	cout << "are your Want Add new Client y/n" << endl;
+	cin >> c;
+	while (c == 'y' || c == 'Y') {
+		system("cls");
+		Fileaddnewclient(REadToLine(Read()));
+		cout << "Do You Want Add NEW Cleint y/n" << endl;
+		cin >> c;
+	}
+}
+//i finshed add clients
+vector<string> Tostructer(string line, string sperator = "##") {
+	vector<string>vC;
+	string sword;
+	int pos = 0;
+	while ((pos = line.find(sperator)) != string::npos) {
+		string sword = line.substr(0, pos);
+		if (line != "")
+			line.erase(0, pos + sperator.size());
+		if (sword != "")
+			vC.push_back(sword);
+	}
+	if (line != "")
+		vC.push_back(line);
+	return vC;
+}
+Clients Read2(string line) {
+	Clients Read2;
+	vector<string>v = Tostructer(line);
+	Read2.Accountnumber = v[0];
+	Read2.pincode = v[1];
+	Read2.name = v[2];
+	Read2.number = v[3];
+	Read2.Accountbalance = stoi(v[4]);
+	return  Read2;
+}
+vector<Clients>allclients() {
+	fstream MyFile;
+	vector<Clients>v;
+	MyFile.open(filenemee, ios::in);
+	string line;
+	if (MyFile.is_open()) {
+		while (getline(MyFile, line)) {
+			if (line != "")
+				v.push_back(Read2(line));
+		}
+
+	}
+	MyFile.close();
+	return v;
+}
+//all show  Clients 
+void savechagesafterdelete(vector<Clients>& v) {
+	fstream MyFile;
+	MyFile.open(filenemee, ios::out);
+	string line;
+	if (MyFile.is_open()) {
+		for (Clients& c : v) {
+			if (c.markdelete == false) {
+				line = REadToLine(c);
+				MyFile << line << endl;
+			}
+		}
+		MyFile.close();
+	}
+}
+void printclient(vector<Clients>v) {
+	cout << "The All Clients in The bank " << endl;
+	for (Clients& c : v) {
+		cout << "|  " << c.Accountnumber;
+		cout << "| " << c.pincode;
+		cout << "|  " << c.name;
+		cout << "|  " << c.number;
+		cout << "|  " << c.Accountbalance;
+		cout << endl;
+	}
+
+}
+void printallclients(vector<Clients>v) {
+	cout << "___________________________________________________________" << endl;
+	cout << "|" << "AccountNumber    " << " Pin Code     " << "|  " << "ClientName                           " << "|" <<
+		"  Phone          " << "| " << "Balance" << endl;
+	cout << "________________________________________________________________________________________________" << endl;
+	printclient(v);
+
+}
+string ReadAccountNumber(string Accountnumber) {
+	cout << "Enter Your AccountNumber" << endl;
+	cin >> Accountnumber;
+	return Accountnumber;
+}
+bool MarkFordelete(vector<Clients>& v, string AccountNumber) {
+	for (Clients& c : v) {
+		if (c.Accountnumber == AccountNumber) {
+			c.markdelete = true;
+			return true;
+		}
+	}
+	return false;
+}
+void printclientwilldelete(Clients print) {
+	cout << "AccountNumber  " << print.Accountnumber << endl;
+	cout << "Pincode  " << print.pincode << endl;
+	cout << " Name   " << print.name << endl;
+	cout << "Number is  " << print.number << endl;
+	cout << "AccountBalance " << print.Accountbalance << endl;
+}
+bool Findclientwithaccountnumber(string Accountnumber, vector<Clients>& v, Clients& Client) {
+	for (Clients& C : v) {
+		if (C.Accountnumber == Accountnumber) {
+			Client = C;
+			return true;
+
+		}
+	}
+	return false;
+}
+bool DeleteClient(vector<Clients>v, string AccountNumber) {
+	Clients Client;
+	char c = 'n';
+	if (Findclientwithaccountnumber(AccountNumber, v, Client)) {
+		printclientwilldelete(Client);
+		cout << "Are You Sure You Want Delete Thie Client y/n?" << endl;
+		cin >> c;
+		if (c == 'y' || c == 'Y') {
+			MarkFordelete(v, AccountNumber);
+			savechagesafterdelete(v);
+			v = allclients();
+			cout << "Client Deleted Successfully" << endl;
+			return true;
+		}
+
+		else {
+			cout << "The Client NOT Deleted" << endl;
+			return false;
+		}
+	}
+	else {
+		cout << "The Client Didnot Found " << endl;
+		return false;
+	}
+
+}
+//finshed deleted;
+Clients changes(string Accountnumber) {
+	Clients change;
+	change.Accountnumber = Accountnumber;
+	cout << "please Enter pincode" << endl;
+	getline(cin >> ws, change.pincode);
+	cout << "Please Enter Your name" << endl;
+	getline(cin, change.name);
+	cout << "Please Enter Your Number" << endl;
+	getline(cin, change.number);
+	cout << "Please Enter Your AccountBalance" << endl;
+	cin >> change.Accountbalance;
+	return change;
+}
+bool updateTheclient(vector<Clients>v, string accountNumber) {
+	char c = 'n';
+	Clients client;
+	if (Findclientwithaccountnumber(accountNumber, v, client)) {
+		printclientwilldelete(client);
+		cout << "Are You Sure You Want update on The Client" << endl;
+		cin >> c;
+		if (c == 'y' || c == 'Y') {
+			for (Clients& c : v) {
+				if (c.Accountnumber == accountNumber) {
+					c = changes(accountNumber);
+					break;
+				}
+			}
+			savechagesafterdelete(v);
+			v = allclients();
+			cout << "The Client Upted Successful " << endl;
+			return true;
+
+		}
+		else cout << "cansled The updatation" << endl;
+	}
+	else cout << "The Client Not Found " << endl;
+	return false;
+}
+// upteteddd;
+void Find(vector<Clients>v, string AccountNumber) {
+	Clients client;
+	if (Findclientwithaccountnumber(AccountNumber, v, client)) {
+		printclientwilldelete(client);
+	}
+	else cout << "The Client Not Found " << endl;
+}
+void GoBacktoMainMenu(vector<Clients>client) {
+	cout << "press any key to back to main menu" << endl;
+	system("pause>0");
+
+}
+//The Client was shown
+void Exist() {
+	cout << "__________________________________" << endl;
+	cout << "program Ends" << endl;
+	cout << "_____________________________________" << endl;
+}
+//finsh Exist
+int ReadThechoosing() {
+	int n;
+	cout << "choose What do You want from 1 to 7" << endl;
+	cin >> n;
+	return n;
+}
+int ReadTransation() {
+	int n;
+	cout << "choose What do You want from 1 to 4" << endl;
+	cin >> n;
+	return n;
+}
+enum ta { DepositeOption = 1, WithdrawOption = 2, BalanceOption = 3, MainMenuOption = 4 };
+bool depositebalancetotheaccount(string AccountNumber, int amount, vector<Clients>v) {
+	char answer = 'n';
+	cout << "Are You sure you want deposite (y/n)" << endl;
+	cin >> answer;
+	if (answer == 'y' || answer == 'Y') {
+		for (Clients& c : v) {
+			if (AccountNumber == c.Accountnumber) {
+				c.Accountbalance += amount;
+				savechagesafterdelete(v);
+				cout << "done successful " << endl;
+				return true;
+			}
+		}
+
+	}
+	return false;	
+}
+void withdraw() {
+	vector<Clients>Client = allclients();
+	cout << "---------------------------------" << endl;
+	cout << setw(15) << "Deposite Screen" << endl;
+	cout << "----------------------------------- " << endl;
+	cout << "please Enter Your Account Number" << endl;
+	string AccountNumber;
+	AccountNumber = ReadAccountNumber(AccountNumber);
+
+	Clients Clientt;
+	while (!Findclientwithaccountnumber(AccountNumber, Client, Clientt)) {
+		cout << "The Account Numbe Do Not Exist" << endl;
+		AccountNumber = ReadAccountNumber(AccountNumber);
+	}
+	printclientwilldelete(Clientt);
+	cout << "please Enter Deposite amount" << endl;
+	int amount; cin >> amount;
+	while (amount > Clientt.Accountbalance) {
+		cout << "Account number Excedd " << endl;
+		cout << "please Enter The amount" << endl;
+		cin >> amount;
+
+	}
+	depositebalancetotheaccount(AccountNumber, amount * -1, Client);
+}
+void Deposite() {
+	vector<Clients>Client = allclients();
+	cout << "---------------------------------" << endl;
+	cout << setw(15) << "Deposite Screen" << endl;
+	cout << "----------------------------------- " << endl;
+	cout << "please Enter Your Account Number" << endl;
+	string AccountNumber;
+	AccountNumber = ReadAccountNumber(AccountNumber);
+
+	Clients Clientt;
+	while (!Findclientwithaccountnumber(AccountNumber, Client, Clientt)) {
+		cout << "The Account Numbe Do Not Exist" << endl;
+		AccountNumber = ReadAccountNumber(AccountNumber);
+	}
+	printclientwilldelete(Clientt);
+	cout << "please Enter Deposite amount" << endl;
+	int amount; cin >> amount;
+	cout << "Are You Sure You want that y/n" << endl;
+	depositebalancetotheaccount(AccountNumber, amount, Client);
+}
+void printbalance(vector<Clients>v) {
+	cout << "The All Clients in The bank " << endl;
+	for (Clients& c : v) {
+		cout << "|  " << c.Accountnumber;
+		cout << "|  " << c.name;
+		cout << "|  " << c.Accountbalance;
+		cout << endl;
+	}
+
+}
+void Balance(vector<Clients>v) {
+	cout << "_______________________________________________________________________" << endl;
+	cout << "|" << "AccountNumber    " << "|  " << "ClientName  " << " | " << "Balance" << endl;
+	cout << "________________________________________________________________________" << endl;
+	printbalance(v);
+}
+void GoBacktoTransion();
+void performmtransactionmenuscreen() {
+	vector<Clients>Client = allclients();
+	int choose;
+	cout << "Please Enter Your Choose" << endl;
+	choose = (ta)ReadTransation();
+	switch (choose)
+	{
+	case ta::DepositeOption:
+	{
+		system("cls");
+		Deposite();
+		GoBacktoTransion();
+		break;
+	}
+	case ta::WithdrawOption:
+		system("cls");
+		withdraw();
+		GoBacktoTransion();
+		break;
+	case ta::BalanceOption:
+		system("cls");
+
+		Balance(Client);
+		GoBacktoTransion();
+		break;
+	case ta::MainMenuOption:
+		GoBacktoMainMenu(Client);
+		system("cls");
+		break;
+	}
+}
+
+void Transactionmenuscreen() {
+	cout << "------------------------------" << endl;
+	cout << "-------------------------------" << endl;
+	cout << "     Transaction Menu Screen    " << endl;
+	cout << "__________________________________" << endl;
+	cout << "------------------------------------" << endl;
+	cout << "[1] Deposit." << endl;
+	cout << "[2] Withdraw" << endl;
+	cout << "[3] TotalBalances " << endl;
+	cout << "[4] Main Menu" << endl;
+	cout << "------------------------------------------" << endl;
+	cout << "---------------------------------------------" << endl;
+	performmtransactionmenuscreen();
+}
+
+void performmainmenuoptions(Alloptions chose) {
+	string Accountnumber = "";
+
+	vector<Clients>Client = allclients();
+	switch (chose) {
+	case Alloptions::showallclient:
+	{
+		system("cls");
+		printallclients(Client);
+		GoBacktoMainMenu(Client);
+		break;
+	}
+	case Alloptions::Addnewclient:
+		system("cls");
+		processnewclient();
+		GoBacktoMainMenu(Client);
+		break;
+	case Alloptions::deletee:
+		Accountnumber = ReadAccountNumber(Accountnumber);
+		system("cls");
+		DeleteClient(Client, Accountnumber);
+		GoBacktoMainMenu(Client);
+		break;
+	case Alloptions::update:
+		Accountnumber = ReadAccountNumber(Accountnumber);
+		system("cls");
+		updateTheclient(Client, Accountnumber);
+		GoBacktoMainMenu(Client);
+		break;
+	case Alloptions::find:
+		Accountnumber = ReadAccountNumber(Accountnumber);
+		system("cls");
+
+		Find(Client, Accountnumber);
+		GoBacktoMainMenu(Client);
+		break;
+	case Alloptions::transaction:
+		system("cls");
+		Transactionmenuscreen();
+		break;
+	case Alloptions::Exit:
+		system("cls");
+		Exist();
+
+	}
+
+
+}
+
+void menuascreen() {
+	cout << "____________________________________" << endl;
+	cout << "____________________________________" << endl;
+	cout << "           Beaking System menu      " << endl;
+	cout << "____________________________________" << endl;
+	cout << "____________________________________" << endl;
+	cout << "[1]" << "Show All Clients " << endl;
+	cout << "[2]" << "Add New Client" << endl;
+	cout << "[3]" << "Delete A Client " << endl;
+	cout << "[4]" << "Update Client Info" << endl;
+	cout << "[5]" << "Find Client" << endl;
+	cout << "[6]" << "Transation" << endl;
+	cout << "[7]" << "Exist" << endl;
+	cout << "_____________________________________  " << endl;
+	cout << "_________________________________________" << endl;
+	Alloptions choose = (Alloptions)ReadThechoosing();
+	if (choose == Alloptions::Exit) {
+		system("cls");
+		Exist();
+		exit(0);
+	}
+	performmainmenuoptions(choose);
+
+}
+//finsh print and organization the menu;
+// part to from the project
+
+
+
+
+int main() {
+	while (true) {
+		system("cls");
+		menuascreen();
+	}
+
+
+
+	return 0;
+}
+void GoBacktoTransion() {
+	system("pause>0");
+	cin.get();  // 
+	cout << "Press any key to go back to the transaction menu.";
+	system("cls");  // Clear the screen to show 
+	Transactionmenuscreen();
+
+}
